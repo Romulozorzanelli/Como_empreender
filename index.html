@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Como Empreender nos Dias Atuais</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0b;
+    --surface: #111114;
+    --accent: #f5820d;
+    --accent2: #ffc04a;
+    --text: #f0ede8;
+    --muted: #6b6867;
+    --border: rgba(245,130,13,0.18);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    width: 100%; height: 100%;
+    overflow: hidden;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    cursor: none;
+  }
+
+  .cursor {
+    position: fixed;
+    width: 10px; height: 10px;
+    background: var(--accent);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%,-50%);
+    transition: transform 0.08s ease;
+    mix-blend-mode: screen;
+  }
+  .cursor-ring {
+    position: fixed;
+    width: 36px; height: 36px;
+    border: 1.5px solid var(--accent);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9998;
+    transform: translate(-50%,-50%);
+    transition: transform 0.18s ease;
+    opacity: 0.5;
+  }
+
+  #bg-canvas {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    opacity: 0.45;
+  }
+
+  #slides {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+  }
+
+  .slide {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 6vw 8vw;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(30px);
+    transition: opacity 0.55s cubic-bezier(.4,0,.2,1), transform 0.55s cubic-bezier(.4,0,.2,1);
+  }
+  .slide.active  { opacity: 1; pointer-events: all; transform: translateY(0); }
+  .slide.exit    { opacity: 0; transform: translateY(-24px); }
+
+  /* layouts */
+  .slide-cover,
+  .slide-center  { align-items: center; text-align: center; justify-content: center; }
+  .slide-verse   {
+    align-items: center; text-align: center; justify-content: center;
+    background: radial-gradient(ellipse 70% 60% at 50% 50%, rgba(245,130,13,0.06) 0%, transparent 80%);
+  }
+
+  /* professions comparison grid */
+  .prof-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2vw;
+    margin-top: 1.4em;
+    width: 100%;
+    max-width: 860px;
+    opacity: 0;
+    animation: fadeUp 0.5s 0.35s forwards;
+  }
+  .prof-col-title {
+    font-family: 'DM Mono', monospace;
+    font-size: clamp(9px, 0.9vw, 12px);
+    letter-spacing: 0.22em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 0.8em;
+  }
+  .prof-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4em;
+  }
+  .prof-list li {
+    font-size: clamp(13px, 1.3vw, 17px);
+    font-weight: 300;
+    color: rgba(240,237,232,0.78);
+    display: flex;
+    align-items: center;
+    gap: 0.6em;
+  }
+  .prof-list li::before {
+    content: '·';
+    color: var(--accent);
+    font-size: 1.4em;
+    line-height: 0;
+    flex-shrink: 0;
+  }
+  .prof-list.digital li { color: var(--accent2); }
+  .prof-list.digital li::before { color: var(--accent2); }
+
+  /* AI tools grid */
+  .tools-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.7em;
+    margin-top: 1.4em;
+    max-width: 720px;
+    opacity: 0;
+    animation: fadeUp 0.5s 0.4s forwards;
+  }
+  .tool-chip {
+    background: rgba(255,192,74,0.07);
+    border: 1px solid rgba(255,192,74,0.22);
+    color: var(--accent2);
+    padding: 0.4em 1em;
+    border-radius: 6px;
+    font-family: 'DM Mono', monospace;
+    font-size: clamp(10px, 1vw, 13px);
+    letter-spacing: 0.04em;
+  }
+  .tool-chip span {
+    display: block;
+    font-size: 0.75em;
+    color: var(--muted);
+    margin-top: 0.1em;
+    letter-spacing: 0.03em;
+  }
+
+  /* typography */
+  .label {
+    font-family: 'DM Mono', monospace;
+    font-size: clamp(10px, 1.1vw, 13px);
+    letter-spacing: 0.22em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 1.2em;
+    opacity: 0;
+    animation: fadeUp 0.5s 0.1s forwards;
+  }
+  .title-xl {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(56px, 10vw, 130px);
+    line-height: 0.92;
+    color: var(--text);
+    opacity: 0;
+    animation: fadeUp 0.5s 0.2s forwards;
+  }
+  .title-xl em { color: var(--accent); font-style: normal; }
+  .title-lg {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(38px, 6.5vw, 88px);
+    line-height: 0.95;
+    color: var(--text);
+    opacity: 0;
+    animation: fadeUp 0.5s 0.2s forwards;
+  }
+  .title-lg em { color: var(--accent); font-style: normal; }
+  .title-md {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(32px, 5vw, 72px);
+    line-height: 1;
+    color: var(--text);
+    opacity: 0;
+    animation: fadeUp 0.5s 0.2s forwards;
+  }
+  .title-md em { color: var(--accent); font-style: normal; }
+  .body-text {
+    font-size: clamp(14px, 1.5vw, 20px);
+    font-weight: 300;
+    line-height: 1.75;
+    color: rgba(240,237,232,0.72);
+    max-width: 580px;
+    margin-top: 1.2em;
+    opacity: 0;
+    animation: fadeUp 0.5s 0.35s forwards;
+  }
+  .highlight-text {
+    font-size: clamp(16px, 2vw, 26px);
+    font-weight: 500;
+    color: var(--text);
+    max-width: 640px;
+    margin-top: 1em;
+    line-height: 1.4;
+    opacity: 0;
+    animation: fadeUp 0.5s 0.3s forwards;
+  }
+  .highlight-text em { color: var(--accent); font-style: normal; }
+
+  .pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6em;
+    margin-top: 1.4em;
+    opacity: 0;
+    animation: fadeUp 0.5s 0.4s forwards;
+  }
+  .pill {
+    background: rgba(245,130,13,0.08);
+    border: 1px solid var(--border);
+    color: var(--accent2);
+    padding: 0.35em 1em;
+    border-radius: 100px;
+    font-family: 'DM Mono', monospace;
+    font-size: clamp(10px, 1vw, 13px);
+    letter-spacing: 0.05em;
+  }
+
+  .divider {
+    width: 60px; height: 3px;
+    background: var(--accent);
+    margin: 1.2em 0;
+    border-radius: 2px;
+    opacity: 0;
+    animation: fadeUp 0.5s 0.25s forwards;
+  }
+  .slide-center .divider, .slide-verse .divider { margin: 1.2em auto; }
+
+  .verse-block {
+    max-width: 680px;
+    opacity: 0;
+    animation: fadeUp 0.5s 0.3s forwards;
+  }
+  .verse-quote {
+    font-size: clamp(20px, 2.6vw, 36px);
+    font-weight: 300;
+    font-style: italic;
+    line-height: 1.55;
+    color: var(--text);
+  }
+  .verse-ref {
+    font-family: 'DM Mono', monospace;
+    font-size: clamp(10px, 1vw, 13px);
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-top: 1.4em;
+  }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2.5vw;
+    margin-top: 1.4em;
+    width: 100%;
+    max-width: 860px;
+    opacity: 0;
+    animation: fadeUp 0.5s 0.35s forwards;
+  }
+  .col-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 10px;
+    padding: 1.3em 1.5em;
+  }
+  .col-card-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(18px, 2.2vw, 30px);
+    color: var(--accent);
+    margin-bottom: 0.5em;
+  }
+  .col-card p {
+    font-size: clamp(12px, 1.15vw, 15px);
+    font-weight: 300;
+    color: rgba(240,237,232,0.62);
+    line-height: 1.65;
+  }
+
+  .big-statement {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(48px, 9vw, 120px);
+    line-height: 0.9;
+    color: var(--text);
+    max-width: 900px;
+    opacity: 0;
+    animation: fadeUp 0.5s 0.25s forwards;
+  }
+  .big-statement em { color: var(--accent); font-style: normal; }
+
+  /* quote callout */
+  .callout-quote {
+    margin-top: 1.6em;
+    border-left: 3px solid var(--accent);
+    padding: 0.6em 1.2em;
+    opacity: 0;
+    animation: fadeUp 0.5s 0.45s forwards;
+  }
+  .callout-quote p {
+    font-size: clamp(14px, 1.4vw, 19px);
+    font-weight: 300;
+    font-style: italic;
+    color: rgba(240,237,232,0.65);
+    line-height: 1.6;
+  }
+  .callout-quote strong { color: var(--accent2); font-style: normal; font-weight: 500; }
+
+  .q-list {
+    list-style: none;
+    margin-top: 1em;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65em;
+    opacity: 0;
+    animation: fadeUp 0.5s 0.35s forwards;
+  }
+  .q-list li {
+    display: flex;
+    align-items: center;
+    gap: 0.8em;
+    font-size: clamp(13px, 1.4vw, 19px);
+    color: rgba(240,237,232,0.8);
+  }
+  .q-list li::before {
+    content: '→';
+    color: var(--accent);
+    font-family: 'DM Mono', monospace;
+    flex-shrink: 0;
+  }
+  /* highlight anchor question */
+  .q-list li.anchor {
+    color: var(--accent2);
+    font-weight: 500;
+    font-size: clamp(15px, 1.6vw, 22px);
+    margin-top: 0.4em;
+  }
+  .q-list li.anchor::before { color: var(--accent2); }
+
+  .section-badge {
+    display: inline-block;
+    background: var(--accent);
+    color: #000;
+    font-family: 'DM Mono', monospace;
+    font-size: clamp(10px, 1vw, 12px);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    padding: 0.3em 1em;
+    border-radius: 4px;
+    margin-bottom: 1.4em;
+    opacity: 0;
+    animation: fadeUp 0.5s 0.1s forwards;
+  }
+
+  .cover-sub {
+    font-family: 'DM Mono', monospace;
+    font-size: clamp(10px, 1.1vw, 14px);
+    letter-spacing: 0.3em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 1em;
+    opacity: 0;
+    animation: fadeUp 0.5s 0.1s forwards;
+  }
+  .cover-tag {
+    margin-top: 1.4em;
+    font-size: clamp(12px, 1.2vw, 16px);
+    font-weight: 300;
+    color: var(--muted);
+    opacity: 0;
+    animation: fadeUp 0.5s 0.5s forwards;
+  }
+
+  /* transition bridge text */
+  .bridge-text {
+    margin-top: 2em;
+    font-size: clamp(13px, 1.3vw, 17px);
+    font-weight: 400;
+    color: var(--accent);
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.06em;
+    opacity: 0;
+    animation: fadeUp 0.5s 0.5s forwards;
+  }
+
+  #progress {
+    position: fixed;
+    bottom: 0; left: 0;
+    height: 2px;
+    background: var(--accent);
+    z-index: 100;
+    transition: width 0.4s ease;
+    box-shadow: 0 0 8px var(--accent);
+  }
+  #counter {
+    position: fixed;
+    bottom: 22px; right: 30px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.15em;
+    z-index: 100;
+  }
+  #nav {
+    position: fixed;
+    bottom: 16px; left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 12px;
+    z-index: 100;
+  }
+  .nav-btn {
+    width: 40px; height: 40px;
+    border: 1px solid var(--border);
+    background: rgba(245,130,13,0.06);
+    color: var(--accent);
+    border-radius: 8px;
+    font-size: 18px;
+    cursor: none;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s, border-color 0.2s;
+  }
+  .nav-btn:hover { background: rgba(245,130,13,0.15); border-color: var(--accent); }
+
+  body::after {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+    opacity: 0.03;
+    pointer-events: none;
+    z-index: 99;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursor-ring"></div>
+
+<div id="slides">
+
+  <!-- 0: CAPA -->
+  <div class="slide slide-cover active" data-index="0">
+    <div class="cover-sub">Série Jovens · Igreja</div>
+    <h1 class="title-xl" style="font-size:clamp(60px,12vw,160px)">COMO<br><em>EMPREENDER</em><br>NOS DIAS<br>ATUAIS</h1>
+    <p class="cover-tag">Trabalho · Fé · Propósito · Futuro</p>
+  </div>
+
+  <!-- 1: ABERTURA 1 -->
+  <div class="slide" data-index="1">
+    <span class="label">01 — Abertura</span>
+    <h2 class="title-lg">A VIDA ADULTA<br>CHEGA PARA <em>TODOS</em></h2>
+    <div class="divider"></div>
+    <p class="body-text">Ainda que hoje você não tenha responsabilidades financeiras, esse tempo chega. Junto dele chegam contas, responsabilidades e a necessidade de sustentar uma vida com dignidade.</p>
+    <div class="pills">
+      <span class="pill">Formar</span>
+      <span class="pill">Trabalhar</span>
+      <span class="pill">Sustentar</span>
+      <span class="pill">Empreender</span>
+    </div>
+  </div>
+
+  <!-- 2: ABERTURA 2 -->
+  <div class="slide" data-index="2">
+    <span class="label">01 — Abertura</span>
+    <h2 class="title-lg">DINHEIRO FAZ<br>PARTE DA <em>VIDA</em></h2>
+    <div class="divider"></div>
+    <p class="body-text">Estamos no mundo e, no mundo, precisamos de dinheiro para viver, sustentar a família e construir uma vida digna. O empreendedorismo é uma das formas de fazer isso com habilidade e propósito.</p>
+  </div>
+
+  <!-- 3: MINHA HISTÓRIA — Infância -->
+  <div class="slide" data-index="3">
+    <span class="section-badge">02 — Minha história</span>
+    <h2 class="title-lg">INFÂNCIA E<br><em>JUVENTUDE</em></h2>
+    <div class="divider"></div>
+    <p class="body-text">Minha mãe sempre me incentivou a trabalhar cedo — isso me ensinou responsabilidade desde novo. Sempre fui curioso, queria entender como as coisas funcionavam e resolver problemas. Mesmo em cargos simples, procurava dar o meu melhor.</p>
+    <div class="pills">
+      <span class="pill">Responsabilidade</span>
+      <span class="pill">Curiosidade</span>
+      <span class="pill">Resolver problemas</span>
+    </div>
+  </div>
+
+  <!-- 4: CAMINHO PROFISSIONAL -->
+  <div class="slide" data-index="4">
+    <span class="label">02 — Minha história</span>
+    <h2 class="title-lg">O CAMINHO<br><em>PROFISSIONAL</em></h2>
+    <div class="divider"></div>
+    <p class="body-text">Comecei com tarefas simples, fui aprendendo programação, automação e inteligência artificial. Aos poucos Deus foi abrindo portas — até criar empresa, sistemas e trabalhar com IA aplicada a negócios.</p>
+    <div class="pills">
+      <span class="pill">Tarefas simples</span>
+      <span class="pill">Programação</span>
+      <span class="pill">Automação</span>
+      <span class="pill">IA</span>
+      <span class="pill">Empresa</span>
+    </div>
+  </div>
+
+  <!-- 5: DIREÇÃO DE DEUS -->
+  <div class="slide" data-index="5">
+    <span class="label">02 — Minha história</span>
+    <h2 class="title-lg">DEUS GUIANDO<br>O <em>PROCESSO</em></h2>
+    <div class="divider"></div>
+    <p class="body-text">Quando me converti, queria participar de tudo na igreja. E comecei a me preocupar quando percebi que trabalhar e estudar tomariam tempo que antes eu passava lá. Com o tempo entendi: crescer profissionalmente também glorifica a Deus, quando feito com responsabilidade e propósito.</p>
+  </div>
+
+  <!-- 6: 3 LIÇÕES — título -->
+  <div class="slide slide-center" data-index="6">
+    <div class="section-badge">03 — Lições</div>
+    <h2 class="title-xl" style="text-align:center">3 LIÇÕES<br>DA <em>MINHA</em><br>HISTÓRIA</h2>
+  </div>
+
+  <!-- 7: LIÇÃO 1 -->
+  <div class="slide" data-index="7">
+    <span class="label">03 — Lição 1</span>
+    <h2 class="title-lg">SEMPRE EXISTIRÃO<br>FORMAS DE<br>GANHAR <em>DINHEIRO</em></h2>
+    <div class="divider"></div>
+    <p class="body-text">O mundo muda, as profissões mudam, mas pessoas úteis, habilidosas e dispostas sempre encontrarão oportunidades. Trabalho, habilidade, criatividade e tecnologia são o caminho.</p>
+    <div class="pills">
+      <span class="pill">Trabalho</span>
+      <span class="pill">Habilidade</span>
+      <span class="pill">Criatividade</span>
+      <span class="pill">Tecnologia</span>
+    </div>
+  </div>
+
+  <!-- 8: LIÇÃO 2 -->
+  <div class="slide" data-index="8">
+    <span class="label">03 — Lição 2</span>
+    <h2 class="title-lg">SERVIR A DEUS<br>NÃO IMPEDE O<br><em>CRESCIMENTO</em></h2>
+    <div class="divider"></div>
+    <p class="highlight-text">Trabalho <em>≠</em> afastamento de Deus</p>
+    <div class="callout-quote">
+      <p>Por muito tempo confundi <strong>dedicação com afastamento</strong>. Depois entendi que Deus também se agrada de pessoas responsáveis, disciplinadas e que usam seus talentos da melhor forma.</p>
+    </div>
+  </div>
+
+  <!-- 9: LIÇÃO 3 -->
+  <div class="slide" data-index="9">
+    <span class="label">03 — Lição 3</span>
+    <h2 class="title-lg">DEUS CONHECE<br>SEU <em>CORAÇÃO</em></h2>
+    <div class="divider"></div>
+    <p class="body-text">Muitas vezes não entendemos o processo, mas Deus vê nossas intenções, nosso esforço e nossos sonhos. Muitas histórias ainda estão só começando.</p>
+    <div class="pills">
+      <span class="pill">Processo</span>
+      <span class="pill">Tempo</span>
+      <span class="pill">Futuro</span>
+      <span class="pill">Sua história começa agora</span>
+    </div>
+  </div>
+
+  <!-- 10: INTERAÇÃO -->
+  <div class="slide" data-index="10">
+    <span class="section-badge">04 — Interação</span>
+    <h2 class="title-md">E VOCÊ, JÁ PENSOU<br><em>NO SEU FUTURO?</em></h2>
+    <div class="divider"></div>
+    <ul class="q-list">
+      <li>Já pensou na profissão que quer seguir?</li>
+      <li>Está estudando algo além da escola?</li>
+      <li>Já recebeu um salário por algum trabalho?</li>
+      <li>Tem medo do futuro? Por quê?</li>
+      <li class="anchor">O que você deseja construir na sua vida?</li>
+    </ul>
+  </div>
+
+  <!-- 11: SEGUNDA PARTE — divisor com ponte -->
+  <div class="slide slide-center" data-index="11">
+    <div class="section-badge">Segunda parte</div>
+    <h2 class="big-statement" style="text-align:center">TRABALHO<br>FIXO X<br><em>EMPREENDER</em></h2>
+    <p class="bridge-text">Agora que você entende o porquê — vamos falar sobre o como.</p>
+  </div>
+
+  <!-- 12: TRABALHO X EMPREENDER -->
+  <div class="slide" data-index="12">
+    <span class="label">05 — Trabalho x Empreender</span>
+    <h2 class="title-lg">NÃO SÃO<br><em>INIMIGOS</em></h2>
+    <div class="divider"></div>
+    <p class="body-text">Empreender não é fugir do trabalho. Muitas vezes é trabalhar ainda mais. Tanto emprego quanto empreendedorismo exigem responsabilidade, esforço e compromisso.</p>
+    <p class="highlight-text" style="animation-delay:0.45s">Empreender = <em>assumir riscos</em> e construir</p>
+  </div>
+
+  <!-- 13: TUDO É UMA VENDA -->
+  <div class="slide" data-index="13">
+    <span class="label">05 — Vendas</span>
+    <h2 class="title-lg">TUDO É<br><em>UMA VENDA</em></h2>
+    <div class="divider"></div>
+    <p class="body-text">Para conseguir um emprego, fechar um cliente ou convencer alguém de uma ideia — você sempre estará vendendo algo. Sua habilidade, seu tempo, seu valor. Empreender ou não, isso nunca muda. Quem entende isso cedo sai na frente.</p>
+    <div class="pills">
+      <span class="pill">Seu tempo</span>
+      <span class="pill">Sua habilidade</span>
+      <span class="pill">Seu valor</span>
+      <span class="pill">Sua ideia</span>
+    </div>
+  </div>
+
+  <!-- 14: FORMAÇÃO X HABILIDADES -->
+
+  <div class="slide" data-index="14">
+    <span class="label">06 — Formação x Habilidades</span>
+    <h2 class="title-lg">DIPLOMA<br>OU <em>HABILIDADE?</em></h2>
+    <div class="divider"></div>
+    <div class="two-col">
+      <div class="col-card">
+        <div class="col-card-title">Diploma</div>
+        <p>Importante, abre portas e dá base sólida. Ainda é muito valorizado no mercado tradicional.</p>
+      </div>
+      <div class="col-card">
+        <div class="col-card-title">Habilidade</div>
+        <p>O mercado valoriza quem sabe executar. Habilidades digitais e práticas criam oportunidades reais.</p>
+      </div>
+    </div>
+    <p class="body-text" style="animation-delay:0.5s; margin-top:1em">O ideal é <strong style="color:var(--accent2)">os dois juntos</strong> — mas nunca pare de aprender.</p>
+  </div>
+
+  <!-- 14: MERCADO DIGITAL -->
+  <div class="slide" data-index="15">
+    <span class="label">07 — Mercado digital</span>
+    <h2 class="title-lg">O MUNDO<br><em>MUDOU</em></h2>
+    <div class="divider"></div>
+    <p class="body-text">Novas profissões surgiram. Antigas perderam espaço. Com dedicação, é possível trabalhar para qualquer lugar do mundo.</p>
+    <div class="prof-grid">
+      <div>
+        <p class="prof-col-title">Tradicionais</p>
+        <ul class="prof-list">
+          <li>Advogado</li>
+          <li>Contador</li>
+          <li>Jornalista</li>
+          <li>Vendedor</li>
+          <li>Designer Gráfico</li>
+        </ul>
+      </div>
+      <div>
+        <p class="prof-col-title">Digitais / Novas</p>
+        <ul class="prof-list digital">
+          <li>Gestor de Tráfego</li>
+          <li>Copywriter</li>
+          <li>Criador de Conteúdo</li>
+          <li>Especialista em IA</li>
+          <li>Dev / Programador</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- 15: NÃO TEMOS TEMPO -->
+  <div class="slide slide-center" data-index="16">
+    <h2 class="big-statement" style="text-align:center">NÃO TEMOS<br><em>TEMPO</em><br>A PERDER</h2>
+    <div class="divider"></div>
+    <p class="body-text" style="text-align:center;max-width:560px">Muitos jovens vivem distraídos e nunca param para pensar seriamente no próprio futuro. O problema não é apenas perder tempo — é perder <strong style="color:var(--accent2)">direção</strong>.</p>
+  </div>
+
+  <!-- 16: FRASE DE IMPACTO — "O problema não é o tempo" -->
+  <div class="slide slide-verse" data-index="17">
+    <div class="divider"></div>
+    <div class="verse-block">
+      <p class="verse-quote" style="font-size:clamp(22px,3vw,42px)">"O problema não é apenas<br>perder tempo — é perder <strong style="color:var(--accent);font-style:normal">direção</strong>."</p>
+    </div>
+  </div>
+
+  <!-- 17: SÓ COMPARTILHAMOS O QUE TEMOS -->
+  <div class="slide" data-index="18">
+    <span class="label">09 — Influência</span>
+    <h2 class="title-lg">SÓ COMPARTILHAMOS<br>O QUE <em>TEMOS</em></h2>
+    <div class="divider"></div>
+    <p class="body-text">Quem está cheio de distração compartilha distração. Quem está cheio de propósito compartilha propósito. Aquilo que consumimos começa a moldar nossa mente e nossas atitudes.</p>
+    <div class="callout-quote">
+      <p>E a internet é hoje o maior molde de mentalidade da nossa geração.</p>
+    </div>
+    <div class="pills">
+      <span class="pill">Conteúdo</span>
+      <span class="pill">Mentalidade</span>
+      <span class="pill">Influência</span>
+      <span class="pill">Ambiente</span>
+    </div>
+  </div>
+
+  <!-- 18: NAVEGAR X NAUFRAGAR -->
+  <div class="slide" data-index="19">
+    <span class="label">10 — Internet</span>
+    <h2 class="title-lg">NAVEGAR<br>OU <em>NAUFRAGAR</em><br>NA INTERNET</h2>
+    <div class="divider"></div>
+    <div class="two-col">
+      <div class="col-card">
+        <div class="col-card-title">Ferramenta</div>
+        <p>A internet pode ensinar, gerar renda e abrir portas para oportunidades em qualquer lugar do mundo.</p>
+      </div>
+      <div class="col-card">
+        <div class="col-card-title">Prisão</div>
+        <p>A mesma internet pode destruir foco, tempo e propósito. Depende de como você a usa.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 19: IA E TECNOLOGIA -->
+  <div class="slide" data-index="20">
+    <span class="label">11 — IA e Tecnologia</span>
+    <h2 class="title-lg">A ERA DA<br><em>INTELIGÊNCIA<br>ARTIFICIAL</em></h2>
+    <div class="divider"></div>
+    <p class="body-text">A IA já está mudando profissões, empresas e mercados inteiros. Quem aprender a usar tecnologia terá vantagem. Comece pelo básico: <strong style="color:var(--accent2)">curiosidade e disposição</strong> já são uma vantagem real.</p>
+    <div class="tools-grid">
+      <div class="tool-chip">ChatGPT <span>Texto, ideias, código</span></div>
+      <div class="tool-chip">Claude <span>Análise e escrita</span></div>
+      <div class="tool-chip">Gemini <span>Pesquisa e produtividade</span></div>
+      <div class="tool-chip">Midjourney <span>Criação de imagens</span></div>
+      <div class="tool-chip">Canva IA <span>Design automatizado</span></div>
+      <div class="tool-chip">Notion IA <span>Organização e produtividade</span></div>
+      <div class="tool-chip">ElevenLabs <span>Voz e áudio com IA</span></div>
+      <div class="tool-chip">Make / Zapier <span>Automação de tarefas</span></div>
+    </div>
+  </div>
+
+  <!-- 20: FECHAMENTO -->
+  <div class="slide" data-index="21">
+    <span class="section-badge">Fechamento</span>
+    <h2 class="title-lg">DEUS DEU<br><em>TALENTOS</em><br>A VOCÊ</h2>
+    <div class="divider"></div>
+    <p class="body-text">Propósito também exige movimento. Não basta crer — é preciso aprender, agir e construir com responsabilidade e coragem.</p>
+    <p class="highlight-text" style="animation-delay:0.45s; margin-top:1.2em">Ainda dá tempo. <em>Comece agora.</em></p>
+  </div>
+
+  <!-- 21: VERSÍCULO 1 -->
+  <div class="slide slide-verse" data-index="22">
+    <span class="label">Palavra</span>
+    <div class="divider"></div>
+    <div class="verse-block">
+      <p class="verse-quote">"...goze do bem de todo o seu trabalho;<br>isto é um dom de Deus."</p>
+      <p class="verse-ref">Eclesiastes</p>
+    </div>
+  </div>
+
+  <!-- 22: VERSÍCULO 2 -->
+  <div class="slide slide-verse" data-index="23">
+    <span class="label">Palavra</span>
+    <div class="divider"></div>
+    <div class="verse-block">
+      <p class="verse-quote">"Tudo o que fizerem, façam de todo o coração,<br>como para o Senhor..."</p>
+      <p class="verse-ref">Colossenses</p>
+    </div>
+  </div>
+
+  <!-- 23: ENCERRAMENTO -->
+  <div class="slide slide-center" data-index="24">
+    <h2 class="title-xl" style="text-align:center;font-size:clamp(50px,10vw,130px)">COMECE<br><em>AGORA</em></h2>
+    <div class="divider"></div>
+    <p class="body-text" style="text-align:center;max-width:500px">Sua história ainda está sendo escrita. Deus conhece seu coração — e o futuro pertence a quem se move com fé e responsabilidade.</p>
+  </div>
+
+</div>
+
+<!-- Progress & Nav -->
+<div id="progress"></div>
+<div id="counter"></div>
+<div id="nav">
+  <button class="nav-btn" id="prev" title="Anterior">←</button>
+  <button class="nav-btn" id="next" title="Próximo">→</button>
+</div>
+
+<script>
+// Canvas background
+const canvas = document.getElementById('bg-canvas');
+const ctx = canvas.getContext('2d');
+let W, H, particles = [];
+
+function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+resize();
+window.addEventListener('resize', resize);
+
+class Particle {
+  constructor() { this.reset(); }
+  reset() {
+    this.x = Math.random() * W; this.y = Math.random() * H;
+    this.size = Math.random() * 1.5 + 0.3;
+    this.vx = (Math.random() - 0.5) * 0.18; this.vy = (Math.random() - 0.5) * 0.18;
+    this.alpha = Math.random() * 0.4 + 0.1;
+    this.shape = Math.random() > 0.7 ? 'square' : 'circle';
+  }
+  update() {
+    this.x += this.vx; this.y += this.vy;
+    if (this.x < 0 || this.x > W || this.y < 0 || this.y > H) this.reset();
+  }
+  draw() {
+    ctx.save(); ctx.globalAlpha = this.alpha; ctx.fillStyle = '#f5820d';
+    if (this.shape === 'square') ctx.fillRect(this.x - this.size, this.y - this.size, this.size * 2, this.size * 2);
+    else { ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill(); }
+    ctx.restore();
+  }
+}
+
+for (let i = 0; i < 80; i++) particles.push(new Particle());
+
+function animBg() {
+  ctx.clearRect(0, 0, W, H);
+  ctx.strokeStyle = 'rgba(245,130,13,0.04)'; ctx.lineWidth = 1;
+  const gs = 80;
+  for (let x = 0; x < W; x += gs) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+  for (let y = 0; y < H; y += gs) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+  particles.forEach(p => { p.update(); p.draw(); });
+  requestAnimationFrame(animBg);
+}
+animBg();
+
+// Cursor
+const cursor = document.getElementById('cursor');
+const ring = document.getElementById('cursor-ring');
+document.addEventListener('mousemove', e => {
+  cursor.style.left = e.clientX + 'px'; cursor.style.top = e.clientY + 'px';
+  ring.style.left = e.clientX + 'px'; ring.style.top = e.clientY + 'px';
+});
+
+// Slides
+const slides = document.querySelectorAll('.slide');
+const total = slides.length;
+let current = 0;
+const progress = document.getElementById('progress');
+const counter = document.getElementById('counter');
+
+const ANIM_CLASSES = '.label,.title-xl,.title-lg,.title-md,.body-text,.highlight-text,.pills,.divider,.two-col,.big-statement,.q-list,.verse-block,.section-badge,.cover-sub,.cover-tag,.callout-quote,.bridge-text,.prof-grid,.tools-grid';
+
+function goTo(n) {
+  if (n < 0 || n >= total) return;
+  slides[current].classList.remove('active');
+  slides[current].classList.add('exit');
+  setTimeout(() => slides[current].classList.remove('exit'), 600);
+
+  const next = slides[n];
+  next.querySelectorAll(ANIM_CLASSES).forEach(el => {
+    el.style.animation = 'none';
+    el.offsetHeight;
+    el.style.animation = '';
+  });
+
+  current = n;
+  slides[current].classList.add('active');
+  progress.style.width = ((current / (total - 1)) * 100) + '%';
+  counter.textContent = (current + 1) + ' / ' + total;
+}
+
+goTo(0);
+
+document.getElementById('next').addEventListener('click', () => goTo(current + 1));
+document.getElementById('prev').addEventListener('click', () => goTo(current - 1));
+
+document.addEventListener('keydown', e => {
+  if (['ArrowRight','ArrowDown',' '].includes(e.key)) { e.preventDefault(); goTo(current + 1); }
+  if (['ArrowLeft','ArrowUp'].includes(e.key)) { e.preventDefault(); goTo(current - 1); }
+});
+
+let tx = 0;
+document.addEventListener('touchstart', e => tx = e.touches[0].clientX, { passive: true });
+document.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - tx;
+  if (Math.abs(dx) > 50) dx < 0 ? goTo(current + 1) : goTo(current - 1);
+}, { passive: true });
+</script>
+</body>
+</html>
